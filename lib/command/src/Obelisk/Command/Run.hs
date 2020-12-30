@@ -46,7 +46,7 @@ import Distribution.Compiler (CompilerFlavor(..))
 import Distribution.PackageDescription.Parsec (parseGenericPackageDescription)
 import Distribution.Parsec.ParseResult (runParseResult)
 import Distribution.Pretty (prettyShow)
-import Distribution.Simple.Compiler (PackageDB (SpecificPackageDB))
+import Distribution.Simple.Compiler (PackageDB (GlobalPackageDB))
 import Distribution.Simple.Configure (configCompilerEx, getInstalledPackages)
 import Distribution.Simple.PackageIndex (InstalledPackageIndex, lookupDependency)
 import Distribution.Simple.Program.Db (emptyProgramDb)
@@ -508,17 +508,19 @@ getGhciSessionSettings (toList -> packageInfos) pathBase useRelativePaths = do
 -- Load the package index used by the GHC in this path's nix project
 loadPackageIndex :: (MonadObelisk m) => FilePath -> m InstalledPackageIndex
 loadPackageIndex root = do
-  procSpec <- runProc <$> nixShellRunConfig root True (Just "ghc-pkg list")
-  (_,Just h,_,_) <- createProcess_ "loadPackageIndex" procSpec
-  -- The first line of the output of "ghc-pkg list" is generally the path to the
-  -- package database. A more robust method of getting this path would be preferred.
-  ghcPkgDBPath <- liftIO $ hGetLine h >>= canonicalizePath
-  liftIO $ hClose h
+  ghcPath <- getPathInNixEnvironment "which ghc"
+  ghcPkgPath <- getPathInNixEnvironment "which ghc-pkg"
   (compiler, _platform, programDb) <- liftIO $
-    configCompilerEx (Just GHC) Nothing Nothing emptyProgramDb Verbosity.silent
+    configCompilerEx (Just GHC) (Just ghcPath) (Just ghcPkgPath) emptyProgramDb Verbosity.silent
   liftIO $ getInstalledPackages Verbosity.silent compiler
-                                [SpecificPackageDB ghcPkgDBPath] programDb
+                                [GlobalPackageDB] programDb
   where
+    getPathInNixEnvironment cmd = do
+      procSpec <- runProc <$> nixShellRunConfig root True (Just cmd)
+      (_,Just h,_,_) <- createProcess_ "loadPackageIndex" procSpec
+      path <- liftIO $ hGetLine h >>= canonicalizePath
+      liftIO $ hClose h
+      pure path
     runProc =
       overCreateProcess (\cs -> cs { std_out = CreatePipe }) . nixShellRunProc
 

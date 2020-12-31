@@ -508,8 +508,8 @@ getGhciSessionSettings (toList -> packageInfos) pathBase useRelativePaths = do
 -- Load the package index used by the GHC in this path's nix project
 loadPackageIndex :: (MonadObelisk m) => FilePath -> m InstalledPackageIndex
 loadPackageIndex root = do
-  ghcPath <- getPathInNixEnvironment "which ghc"
-  ghcPkgPath <- getPathInNixEnvironment "which ghc-pkg"
+  ghcPath <- getPathInNixEnvironment "bash -c 'type -p ghc'"
+  ghcPkgPath <- getPathInNixEnvironment "bash -c 'type -p ghc-pkg'"
   (compiler, _platform, programDb) <- liftIO $
     configCompilerEx (Just GHC) (Just ghcPath) (Just ghcPkgPath) emptyProgramDb Verbosity.silent
   liftIO $ getInstalledPackages Verbosity.silent compiler

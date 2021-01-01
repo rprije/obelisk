@@ -49,7 +49,7 @@ import Distribution.Pretty (prettyShow)
 import Distribution.Simple.Compiler (PackageDB (GlobalPackageDB))
 import Distribution.Simple.Configure (configCompilerEx, getInstalledPackages)
 import Distribution.Simple.PackageIndex (InstalledPackageIndex, lookupDependency)
-import Distribution.Simple.Program.Db (emptyProgramDb)
+import Distribution.Simple.Program.Db (defaultProgramDb)
 import qualified Distribution.System as Dist
 import Distribution.Types.BuildInfo (buildable, cppOptions, defaultExtensions, defaultLanguage, hsSourceDirs, options, targetBuildDepends)
 import Distribution.Types.CondTree (simplifyCondTree)
@@ -511,7 +511,7 @@ loadPackageIndex root = do
   ghcPath <- getPathInNixEnvironment "bash -c 'type -p ghc'"
   ghcPkgPath <- getPathInNixEnvironment "bash -c 'type -p ghc-pkg'"
   (compiler, _platform, programDb) <- liftIO $
-    configCompilerEx (Just GHC) (Just ghcPath) (Just ghcPkgPath) emptyProgramDb Verbosity.silent
+    configCompilerEx (Just GHC) (Just ghcPath) (Just ghcPkgPath) defaultProgramDb Verbosity.verbose
   liftIO $ getInstalledPackages Verbosity.silent compiler
                                 [GlobalPackageDB] programDb
   where

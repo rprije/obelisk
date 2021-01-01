@@ -511,7 +511,7 @@ loadPackageIndex root = do
   ghcPath <- getPathInNixEnvironment "bash -c 'type -p ghc'"
   ghcPkgPath <- getPathInNixEnvironment "bash -c 'type -p ghc-pkg'"
   (compiler, _platform, programDb) <- liftIO $
-    configCompilerEx (Just GHC) (Just ghcPath) (Just ghcPkgPath) defaultProgramDb Verbosity.verbose
+    configCompilerEx (Just GHC) (Just ghcPath) (Just ghcPkgPath) defaultProgramDb Verbosity.silent
   liftIO $ getInstalledPackages Verbosity.silent compiler
                                 [GlobalPackageDB] programDb
   where
